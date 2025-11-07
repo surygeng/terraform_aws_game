@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+  <title>Guess the Number</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+    input { padding: 5px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Guess the Number (1–20)</h1>
+  <form method="POST">
+    <input type="number" name="guess" required>
+    <button type="submit">Guess</button>
+  </form>
+  <p>{{ message }}</p>
+</body>
+</html>
