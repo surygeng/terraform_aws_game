@@ -13,7 +13,7 @@ variable "instance_type" {
 variable "ami_id" {
   description = "Ubuntu AMI ID for the chosen region"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0"
+  default     = "ami-0049e4b5ba14b6d36"
 }
 
 variable "container_image" {
