@@ -34,8 +34,8 @@ resource "aws_security_group" "web_sg" {  # what is security group?
 }
 
 resource "aws_key_pair" "default" {
-  key_name   = "terraform-game-key"
-  public_key = file("~/.ssh/id_rsa.pub")
+    key_name   = "terraform-game-key"
+    public_key = file("~/.ssh/id_rsa.pub")
 }
 
 
@@ -46,7 +46,7 @@ resource "aws_instance" "web" {
 
     # attach security group (default VPC)
     vpc_security_group_ids = [aws_security_group.web_sg.id]
-    key_name      = aws_key_pair.default.key_name
+    key_name               = aws_key_pair.default.key_name
 
     user_data = <<-EOF
         #!/bin/bash
