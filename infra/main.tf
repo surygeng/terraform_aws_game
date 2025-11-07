@@ -1,60 +1,80 @@
 terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+    required_providers {
+        aws = {
+            source = "hashicorp/aws"
+            version = "~> 5.0"
+        }
     }
-  }
 }
 
-provider "aws" {
-  region = var.aws_region
+provides "aws" {
+    region = var.aws_region
 }
 
-# Security group allowing HTTP in, all outbound
-resource "aws_security_group" "web_sg" {
-  name        = "terraform-game-web-sg"
-  description = "Allow HTTP inbound and all outbound"
+# Security group to allow HTTP in, all traffic out 
+resource "aws_security_group" "web_sg" {  # what is security group? 
+    name        = "terraform_game_web_sg"
+    description = "Allow HTTP inboud and all outboud"   
 
-  ingress {
-    description = "HTTP from anywhere"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    ingress {
+        description = "HTTP from anywhere"
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
 
-  egress {
-    description = "All outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    egress {
+        description = "all outbound" 
+        from_port   = 0
+        to_port     = 0 
+        protocol   = "-1" 
+        cidr_blocks = ["0.0.0.0/0"]
+    }
 }
 
-# EC2 instance that runs your game container
+resource "aws_key_pair" "default" {
+  key_name   = "terraform-game-key"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
+
+# EC2 instance that runs the game container 
 resource "aws_instance" "web" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
+    ami           = var.ami_id 
+    instance_type = var.instance_type 
 
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
+    # attach security group (default VPC)
+    vpc_security_group_ids = [aws_security_group.web_sg.id]
+    key_name      = aws_key_pair.default.key_name
 
-  user_data = <<-EOF
-    #!/bin/bash
-    set -euxo pipefail
+    user_data = <<-EOF
+        #!/bin/bash
+        set -euxo pipefail
 
-    apt-get update -y
-    apt-get install -y docker.io
+        # Update and install Docker
+        apt-get update -y
+        apt-get install -y docker.io
 
-    systemctl enable docker
-    systemctl start docker
+        systemctl enable docker
+        systemctl start docker
 
-    # Pull and run your game image on port 80 -> 8080 in container
-    docker run -d -p 80:8080 ${var.container_image}
-  EOF
+        # (best-effort) stop whatever was on port 80 before
+        docker ps --format '{{.ID}} {{.Ports}}' | \
+        grep ':80->' | awk '{print $1}' | xargs -r docker stop || true
 
-  tags = {
-    Name = "terraform-aws-game-demo"
-  }
+        # Pull and run your game image
+        docker run -d -p 80:8080 ${var.container_image}
+    EOF
+
+    tags = {
+        Name = terraform-aws-game-demo
+    }
 }
+
+
+
+
+
+
+
